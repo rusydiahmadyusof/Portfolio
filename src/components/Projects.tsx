@@ -6,12 +6,7 @@ export const Projects = () => {
   const { repos, loading, error, isConfigured } = useGitHub();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isHoveredRef = useRef(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-
-  useEffect(() => {
-    isHoveredRef.current = isHovered;
-  }, [isHovered]);
 
   useEffect(() => {
     if (repos.length <= 1) {
@@ -19,7 +14,7 @@ export const Projects = () => {
     }
 
     let animationFrameId: number | null = null;
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const startAutoScroll = () => {
       const container = scrollContainerRef.current;
@@ -124,7 +119,7 @@ export const Projects = () => {
   }
 
   const getSortedTopics = (topics: string[]) => {
-    const priority = { 'case-study': 1, 'featured': 2, 'ongoing': 3 };
+    const priority: Record<string, number> = { 'case-study': 1, 'featured': 2, 'ongoing': 3 };
     return [...topics].sort((a, b) => {
       return (priority[a.toLowerCase()] || 999) - (priority[b.toLowerCase()] || 999);
     });
@@ -149,8 +144,8 @@ export const Projects = () => {
         <div
           ref={scrollContainerRef}
           className="overflow-x-auto pb-6 -mx-4 px-4 md:px-6 scrollbar-hide snap-x snap-mandatory scroll-smooth"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={() => { isHoveredRef.current = true; }}
+          onMouseLeave={() => { isHoveredRef.current = false; }}
           style={{ paddingTop: '8px', paddingBottom: '8px' }}
         >
           <div className="flex gap-4 md:gap-6 min-w-max py-2">

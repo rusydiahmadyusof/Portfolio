@@ -56,7 +56,7 @@ export const Hero = () => {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [sentences.length]);
+  }, []);
 
   const currentSentence = sentences[currentIndex];
 
@@ -132,15 +132,11 @@ export const Hero = () => {
                       <span className="text-purple-400 font-semibold">{currentSentence.highlight}</span>
                       {currentSentence.text2}
                       {currentSentence.highlight2 && (
-                        <>
-                          <span className="text-purple-400 font-semibold">{currentSentence.highlight2}</span>
-                        </>
+                        <span className="text-purple-400 font-semibold">{currentSentence.highlight2}</span>
                       )}
                       {currentSentence.text3}
                       {currentSentence.highlight3 && (
-                        <>
-                          <span className="text-purple-400 font-semibold">{currentSentence.highlight3}</span>
-                        </>
+                        <span className="text-purple-400 font-semibold">{currentSentence.highlight3}</span>
                       )}
                       {currentSentence.text4}
                     </span>

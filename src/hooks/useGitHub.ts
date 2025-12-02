@@ -1,7 +1,7 @@
 import useSWR from 'swr';
 import { fetchUserProfile, fetchRepositories, fetchAllRepoLanguages, fetchRepoDescription } from '../services/github';
 import { filterRepositories, calculateTechStack } from '../utils/githubHelpers';
-import type { GitHubUser, GitHubRepo, TechStackItem } from '../types/github';
+import type { GitHubUser, GitHubRepo, TechStackItem, RepoLanguages } from '../types/github';
 
 const GITHUB_USERNAME = import.meta.env.VITE_GITHUB_USERNAME || '';
 

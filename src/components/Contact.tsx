@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -134,36 +133,20 @@ export const Contact = () => {
   };
 
   return (
-    <motion.section
+    <section
       id='contact'
       className='min-h-screen flex items-center relative z-10'
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true, margin: '-100px' }}
-      transition={{ duration: 0.6 }}
     >
       <div className='container-custom w-full'>
-        <motion.div
-          className='text-center mb-8 md:mb-20'
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
+        <div className='text-center mb-8 md:mb-20'>
           <h2 className='section-title text-white'>Contact Me</h2>
           <p className='section-subtitle'>Get in touch with me</p>
-        </motion.div>
+        </div>
 
         <div className='max-w-5xl mx-auto'>
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8'>
             {/* Contact Form */}
-            <motion.div
-              className='glass rounded-xl p-5 md:p-6'
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
+            <div className='glass rounded-xl p-5 md:p-6'>
               <div className='mb-4'>
                 <h3 className='text-xl font-bold text-white mb-1'>
                   Send a Message
@@ -195,44 +178,32 @@ export const Contact = () => {
 
                 {/* Error Messages */}
                 {rateLimitError && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className='p-3 bg-red-500/10 border border-red-500/30 rounded-lg backdrop-blur-sm'
-                  >
+                  <div className='p-3 bg-red-500/10 border border-red-500/30 rounded-lg backdrop-blur-sm'>
                     <div className='flex items-center gap-2'>
                       <i className='bi bi-exclamation-triangle-fill text-red-400'></i>
                       <p className='text-sm text-red-400'>{rateLimitError}</p>
                     </div>
-                  </motion.div>
+                  </div>
                 )}
 
                 {submitError && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className='p-3 bg-red-500/10 border border-red-500/30 rounded-lg backdrop-blur-sm'
-                  >
+                  <div className='p-3 bg-red-500/10 border border-red-500/30 rounded-lg backdrop-blur-sm'>
                     <div className='flex items-center gap-2'>
                       <i className='bi bi-exclamation-triangle-fill text-red-400'></i>
                       <p className='text-sm text-red-400'>{submitError}</p>
                     </div>
-                  </motion.div>
+                  </div>
                 )}
 
                 {submitSuccess && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className='p-3 bg-green-500/10 border border-green-500/30 rounded-lg backdrop-blur-sm'
-                  >
+                  <div className='p-3 bg-green-500/10 border border-green-500/30 rounded-lg backdrop-blur-sm'>
                     <div className='flex items-center gap-2'>
                       <i className='bi bi-check-circle-fill text-green-400'></i>
                       <p className='text-sm text-green-400'>
                         Thank you! I'll get back to you soon.
                       </p>
                     </div>
-                  </motion.div>
+                  </div>
                 )}
 
                 {/* Name Field */}
@@ -253,14 +224,10 @@ export const Contact = () => {
                     placeholder='Your name'
                   />
                   {errors.name && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className='mt-1.5 text-xs text-red-400 flex items-center gap-1'
-                    >
+                    <p className='mt-1.5 text-xs text-red-400 flex items-center gap-1'>
                       <i className='bi bi-info-circle text-xs'></i>
                       {errors.name.message}
-                    </motion.p>
+                    </p>
                   )}
                 </div>
 
@@ -282,14 +249,10 @@ export const Contact = () => {
                     placeholder='your.email@example.com'
                   />
                   {errors.email && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className='mt-1.5 text-xs text-red-400 flex items-center gap-1'
-                    >
+                    <p className='mt-1.5 text-xs text-red-400 flex items-center gap-1'>
                       <i className='bi bi-info-circle text-xs'></i>
                       {errors.email.message}
-                    </motion.p>
+                    </p>
                   )}
                 </div>
 
@@ -311,14 +274,10 @@ export const Contact = () => {
                     placeholder='Tell me about your project or just say hello...'
                   />
                   {errors.message && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className='mt-1.5 text-xs text-red-400 flex items-center gap-1'
-                    >
+                    <p className='mt-1.5 text-xs text-red-400 flex items-center gap-1'>
                       <i className='bi bi-info-circle text-xs'></i>
                       {errors.message.message}
-                    </motion.p>
+                    </p>
                   )}
                 </div>
 
@@ -395,16 +354,10 @@ export const Contact = () => {
                   Your information is secure and private
                 </p>
               </form>
-            </motion.div>
+            </div>
 
             {/* Contact Info & Social Links - Desktop only */}
-            <motion.div
-              className='hidden lg:block space-y-4'
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
+            <div className='hidden lg:block space-y-4'>
               <div className='glass rounded-xl p-5 md:p-6'>
                 <h3 className='text-xl font-bold text-white mb-3'>
                   Let's Connect
@@ -463,10 +416,10 @@ export const Contact = () => {
                   please mention it in your message.
                 </p>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };
