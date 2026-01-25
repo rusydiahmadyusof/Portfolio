@@ -16,17 +16,17 @@
   }
 
   body {
-    @apply bg-slate-950 text-white;
+    @apply bg-background-dark text-slate-300;
     min-height: 100vh;
     width: 100%;
     overflow-x: hidden;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(147, 51, 234, 0.15) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%);
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Grid Background Pattern - More visible for interactive background */
   body::before {
     content: '';
     position: fixed;
@@ -34,12 +34,43 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-    background-size: 24px 24px;
+    background-image: radial-gradient(circle, #25e2f4 1px, transparent 1px);
+    background-size: 50px 50px;
     background-position: 0 0;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.3;
+    opacity: 0.15;
+    animation: gridMove 20s linear infinite;
+  }
+
+  @keyframes gridMove {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 50px 50px;
+    }
+  }
+
+  /* Scanline Overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0) 50%,
+      rgba(0,0,0,0.2) 50%,
+      rgba(0,0,0,0.2) 100%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.1;
   }
 
   #root {
@@ -89,6 +120,41 @@
     display: none;
   }
 
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0D1117;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #25e2f4;
+  }
+
+  /* Blinking Cursor Animation */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .animate-blink {
+    animation: blink 1s step-end infinite;
+  }
+
+  /* Code Syntax Highlighting */
+  .code-syntax-key { color: #ff7b72; }
+  .code-syntax-string { color: #a5d6ff; }
+  .code-syntax-value { color: #79c0ff; }
+  .code-syntax-comment { color: #8b949e; }
+
   /* Smooth scrolling for horizontal projects */
   .snap-x {
     scroll-snap-type: x mandatory;
@@ -101,7 +167,7 @@
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(4px);
+      transform: translateY(20px);
     }
     to {
       opacity: 1;
@@ -109,7 +175,179 @@
     }
   }
 
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes fadeInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   .animate-fadeIn {
-    animation: fadeIn 0.2s ease-out forwards;
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  .animate-fadeInLeft {
+    animation: fadeInLeft 0.6s ease-out forwards;
+  }
+
+  .animate-fadeInRight {
+    animation: fadeInRight 0.6s ease-out forwards;
+  }
+
+  .animate-scaleIn {
+    animation: scaleIn 0.5s ease-out forwards;
+  }
+
+  .opacity-0 {
+    opacity: 0;
+  }
+
+  /* Smooth hover transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Floating Code Snippets Animation */
+  @keyframes floatCode {
+    0%, 100% {
+      transform: translate(0, 0) rotate(0deg);
+      opacity: 0.1;
+    }
+    25% {
+      transform: translate(20px, -30px) rotate(2deg);
+      opacity: 0.2;
+    }
+    50% {
+      transform: translate(-15px, -60px) rotate(-2deg);
+      opacity: 0.15;
+    }
+    75% {
+      transform: translate(30px, -30px) rotate(1deg);
+      opacity: 0.2;
+    }
+  }
+
+  /* Glitch Effect */
+  @keyframes glitch {
+    0%, 100% {
+      transform: translate(0);
+      clip-path: inset(0 0 0 0);
+    }
+    20% {
+      transform: translate(-2px, 2px);
+      clip-path: inset(20% 0 60% 0);
+    }
+    40% {
+      transform: translate(-2px, -2px);
+      clip-path: inset(60% 0 20% 0);
+    }
+    60% {
+      transform: translate(2px, 2px);
+      clip-path: inset(40% 0 40% 0);
+    }
+    80% {
+      transform: translate(2px, -2px);
+      clip-path: inset(80% 0 10% 0);
+    }
+  }
+
+  @keyframes glitch-fast {
+    0%, 100% {
+      transform: translate(0);
+    }
+    10% {
+      transform: translate(-1px, 1px);
+    }
+    20% {
+      transform: translate(1px, -1px);
+    }
+    30% {
+      transform: translate(-1px, -1px);
+    }
+    40% {
+      transform: translate(1px, 1px);
+    }
+    50% {
+      transform: translate(-1px, 1px);
+    }
+    60% {
+      transform: translate(1px, -1px);
+    }
+    70% {
+      transform: translate(-1px, -1px);
+    }
+    80% {
+      transform: translate(1px, 1px);
+    }
+    90% {
+      transform: translate(-1px, 1px);
+    }
+  }
+
+  .animate-glitch {
+    animation: glitch 0.3s ease-in-out;
+  }
+
+  .animate-glitch-fast {
+    animation: glitch-fast 0.2s ease-in-out;
+  }
+
+  /* Loading Bar Animation */
+  @keyframes loading-bar {
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Typing Text Effect */
+  .typing-text {
+    display: inline-block;
   }
 }

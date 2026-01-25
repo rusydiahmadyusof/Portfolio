@@ -1,20 +1,24 @@
 import { useGitHub } from '../hooks/useGitHub';
+import { TerminalWindow } from './TerminalWindow';
+import { useScrollAnimation } from '../hooks/useScrollAnimation';
+import { getTechColor, getTechIconName } from '../utils/techHelpers';
+import { DISPLAY_LIMITS } from '../utils/constants';
 
 export const About = () => {
-  const { loading, error, isConfigured } = useGitHub();
+  const { user, techStack, loading, error, isConfigured } = useGitHub();
+  const { ref: terminalRef, isVisible: terminalVisible } = useScrollAnimation();
+  const { ref: techRef, isVisible: techVisible } = useScrollAnimation();
 
   if (!isConfigured) {
     return (
-      <section
-        id='about'
-        className='min-h-screen'
-      >
-        <div className='container-custom'>
-          <h2 className='section-title text-center text-white'>About Me</h2>
-          <div className='glass rounded-2xl p-8 md:p-12 text-center'>
-            <p className='text-gray-400'>
-              Configure your GitHub username to see your profile.
-            </p>
+      <section id="about" className="min-h-screen py-12">
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
+          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2 font-display">
+            <span className="material-symbols-outlined text-secondary">terminal</span>
+            // ABOUT_ME.CONFIG
+          </h3>
+          <div className="glass rounded-2xl p-8 text-center">
+            <p className="text-gray-400">Configure your GitHub username to see your profile.</p>
           </div>
         </div>
       </section>
@@ -23,15 +27,12 @@ export const About = () => {
 
   if (loading) {
     return (
-      <section
-        id='about'
-        className='min-h-screen'
-      >
-        <div className='container-custom'>
-          <div className='space-y-4 animate-pulse'>
-            <div className='h-12 bg-white/10 rounded-xl w-64 mx-auto'></div>
-            <div className='h-4 bg-white/10 rounded w-full'></div>
-            <div className='h-4 bg-white/10 rounded w-5/6'></div>
+      <section id="about" className="min-h-screen py-12">
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
+          <div className="space-y-4 animate-pulse">
+            <div className="h-12 bg-white/10 rounded-xl w-64"></div>
+            <div className="h-4 bg-white/10 rounded w-full"></div>
+            <div className="h-4 bg-white/10 rounded w-5/6"></div>
           </div>
         </div>
       </section>
@@ -40,95 +41,131 @@ export const About = () => {
 
   if (error) {
     return (
-      <section
-        id='about'
-        className='min-h-screen'
-      >
-        <div className='container-custom'>
-          <h2 className='section-title text-center text-white'>About Me</h2>
-          <div className='glass rounded-2xl p-8 text-center'>
-            <p className='text-red-400 mb-4'>Error: {error.message}</p>
+      <section id="about" className="min-h-screen py-12">
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
+          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2 font-display">
+            <span className="material-symbols-outlined text-secondary">terminal</span>
+            // ABOUT_ME.CONFIG
+          </h3>
+          <div className="glass rounded-2xl p-8 text-center">
+            <p className="text-red-400 mb-4">Error: {error.message}</p>
           </div>
         </div>
       </section>
     );
   }
 
+  const name = user?.name || 'Rusydi Ahmad Yusof';
+  const role = user?.bio || 'Front End Web Developer';
+  const location = user?.location || 'Malaysia';
+  const interests = ['React', 'TypeScript', 'Modern Web Development'];
+
   return (
-    <section
-      id='about'
-      className='relative min-h-screen flex items-center overflow-hidden z-10'
-    >
-      {/* Static background elements */}
-      <div className='absolute inset-0 overflow-hidden pointer-events-none'>
-        <div className='absolute top-1/4 left-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl'></div>
-        <div className='absolute bottom-1/4 right-0 w-80 h-80 bg-purple-800/10 rounded-full blur-3xl'></div>
-      </div>
-
-      <div className='container-custom w-full relative z-10'>
-        <div className='text-center mb-8 md:mb-12'>
-          <h2 className='section-title text-white'>About Me</h2>
-          <p className='section-subtitle'>Front End Web Developer</p>
-        </div>
-
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center'>
-          {/* Image */}
-          <div className='relative'>
-            <div className='relative group'>
-              {/* Decorative gradient background */}
-              <div className='absolute -inset-4 bg-gradient-to-br from-purple-600/20 to-purple-800/20 rounded-3xl blur-xl transition-all duration-200'></div>
-
-              {/* Image container */}
-              <div className='relative glass rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-purple-500/30 transition-all duration-150'>
-                {/* Overlay to help obscure logo */}
-                <div className='absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-purple-800/20 z-10 pointer-events-none'></div>
-                <img
-                  src='/about.jpg'
-                  alt='About me'
-                  className='w-full h-auto object-cover group-hover:scale-105 transition-transform duration-200 relative'
-                  style={{ filter: 'brightness(0.95) contrast(1.1)' }}
-                />
-                {/* Decorative element to cover logo area */}
-                <div className='absolute top-4 right-4 w-24 h-24 bg-gradient-to-br from-purple-600/40 to-purple-800/40 rounded-full blur-2xl z-20'></div>
+    <section id="about" className="relative min-h-screen flex items-center overflow-hidden z-10 py-12">
+      <div className="max-w-7xl mx-auto p-4 md:p-8 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Terminal Window */}
+          <div ref={terminalRef} className={`lg:col-span-7 flex flex-col ${terminalVisible ? 'animate-fadeInLeft' : ''}`}>
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2 font-display">
+              <span className="material-symbols-outlined text-secondary">terminal</span>
+              // ABOUT_ME.CONFIG
+            </h3>
+            <TerminalWindow>
+              <div className="flex gap-2 mb-4 text-slate-400">
+                <span>$</span>
+                <span className="text-white">cat</span>
+                <span>profile.json</span>
               </div>
-            </div>
+              <div className="space-y-1">
+                <div className="pl-0 text-white">{'{'}</div>
+                <div className="pl-4">
+                  <span className="code-syntax-key">"name"</span>: <span className="code-syntax-string">"{name}"</span>,
+                </div>
+                <div className="pl-4">
+                  <span className="code-syntax-key">"role"</span>: <span className="code-syntax-string">"{role}"</span>,
+                </div>
+                <div className="pl-4">
+                  <span className="code-syntax-key">"location"</span>: <span className="code-syntax-string">"{location}"</span>,
+                </div>
+                <div className="pl-4">
+                  <span className="code-syntax-key">"status"</span>: <span className="code-syntax-string">"Building the future"</span>,
+                </div>
+                <div className="pl-4">
+                  <span className="code-syntax-key">"interests"</span>: [
+                </div>
+                <div className="pl-8">
+                  {interests.map((interest, index) => (
+                    <span key={interest}>
+                      <span className="code-syntax-string">"{interest}"</span>
+                      {index < interests.length - 1 ? ', ' : ''}
+                    </span>
+                  ))}
+                </div>
+                <div className="pl-4">],</div>
+                <div className="pl-4">
+                  <span className="code-syntax-key">"mission"</span>: <span className="code-syntax-string">"To create immersive web experiences that blur the line between utility and art."</span>
+                </div>
+                <div className="pl-0 text-white">{'}'}</div>
+              </div>
+            </TerminalWindow>
           </div>
 
-          {/* Content */}
-          <div className='space-y-4'>
-            <div className='glass rounded-2xl p-6 md:p-8 relative overflow-hidden group hover:glass-strong transition-all duration-150'>
-              {/* Content */}
-              <div className='relative space-y-3'>
-                <div>
-                  <p className='text-sm md:text-base text-gray-300 leading-relaxed'>
-                    <span className='text-purple-400 font-semibold'>
-                      Crafting pixel-perfect, high-performance
-                    </span>{' '}
-                    web experiences.
-                  </p>
-                </div>
-
-                <div>
-                  <p className='text-sm md:text-base text-gray-300 leading-relaxed'>
-                    Transforming{' '}
-                    <span className='text-purple-400 font-semibold'>
-                      complex designs into responsive interfaces
-                    </span>{' '}
-                    with modern tech.
-                  </p>
-                </div>
-
-                <div>
-                  <p className='text-sm md:text-base text-gray-300 leading-relaxed'>
-                    Optimized for{' '}
-                    <span className='text-purple-400 font-semibold'>
-                      speed, accessibility, and scalability
-                    </span>
-                    .
-                  </p>
+          {/* Tech Stack Section */}
+          <div ref={techRef} className={`lg:col-span-5 flex flex-col ${techVisible ? 'animate-fadeInRight' : ''}`}>
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2 font-display">
+              <span className="material-symbols-outlined text-primary">hub</span>
+              // TECH_STACK.NET
+            </h3>
+            {techStack && techStack.length > 0 ? (
+              <div className="flex-1 rounded-lg border border-border-dark bg-background-dark p-6 relative overflow-hidden group">
+                {/* Circuit Lines Background */}
+                <div
+                  className="absolute inset-0 opacity-20"
+                  style={{
+                    backgroundImage: 'radial-gradient(#25e2f4 1px, transparent 1px)',
+                    backgroundSize: '20px 20px',
+                  }}
+                ></div>
+                <div className="grid grid-cols-4 gap-6 relative z-10 h-full content-center">
+                  {techStack.slice(0, DISPLAY_LIMITS.TECH_STACK).map((tech, index) => {
+                    const color = getTechColor(tech.name);
+                    const iconName = getTechIconName(tech.name);
+                    return (
+                      <div 
+                        key={tech.name} 
+                        className={`flex flex-col items-center gap-2 group/node ${techVisible ? 'animate-fadeInUp' : ''}`}
+                        style={techVisible ? { animationDelay: `${index * 0.1}s` } : undefined}
+                      >
+                        <div
+                          className="w-14 h-14 rounded-xl bg-surface-dark border border-border-dark flex items-center justify-center transition-all duration-300 group-hover/node:border-primary"
+                          style={{
+                            color: color.text,
+                            boxShadow: `0 0 15px ${color.shadow.replace('0.4', '0.1')}`,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.boxShadow = `0 0 20px ${color.shadow}`;
+                            e.currentTarget.style.borderColor = color.border;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.boxShadow = `0 0 15px ${color.shadow.replace('0.4', '0.1')}`;
+                            e.currentTarget.style.borderColor = '#30363d';
+                          }}
+                        >
+                          <span className="material-symbols-outlined text-3xl">{iconName}</span>
+                        </div>
+                        <span className="text-xs font-mono text-slate-400 group-hover/node:text-white transition-colors">
+                          {tech.name}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex-1 rounded-lg border border-border-dark bg-background-dark p-6 flex items-center justify-center">
+                <p className="text-slate-400 text-sm">No technologies detected yet.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

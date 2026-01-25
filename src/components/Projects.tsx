@@ -1,73 +1,90 @@
 import { useEffect, useRef, useState } from 'react';
 import { useGitHub } from '../hooks/useGitHub';
-import { getDeploymentUrl, getTechIcon } from '../utils/githubHelpers';
+import { getDeploymentUrl } from '../utils/githubHelpers';
+import { useScrollAnimation } from '../hooks/useScrollAnimation';
+import { PROJECT_STATUS, VERSIONS, DISPLAY_LIMITS } from '../utils/constants';
+
+const getStatus = (topics: string[] = []): { label: string; color: string; pulse: boolean } => {
+  if (topics.includes('live') || topics.includes('deployed')) {
+    return PROJECT_STATUS.LIVE;
+  }
+  if (topics.includes('beta') || topics.includes('ongoing')) {
+    return PROJECT_STATUS.BETA;
+  }
+  return PROJECT_STATUS.LIVE;
+};
+
+const getVersion = (): string => {
+  return VERSIONS[Math.floor(Math.random() * VERSIONS.length)];
+};
+
+const getHash = (id: number): string => {
+  return id.toString(16).slice(0, 6);
+};
 
 export const Projects = () => {
   const { repos, loading, error, isConfigured } = useGitHub();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isHoveredRef = useRef(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation();
 
   useEffect(() => {
-    if (repos.length <= 1) {
-      return;
-    }
+    if (repos.length <= 1) return;
 
-    let animationFrameId: number | null = null;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-    const startAutoScroll = () => {
-      const container = scrollContainerRef.current;
-      if (!container) {
+    let frameId: number | undefined;
+    let position = 0;
+    const speed = 0.5;
+    let isRunning = true;
+
+    const animate = () => {
+      if (!isRunning || !container) return;
+      
+      if (isHoveredRef.current) {
+        frameId = requestAnimationFrame(animate);
         return;
       }
 
-      const maxScroll = container.scrollWidth - container.clientWidth;
-      if (maxScroll <= 0) {
-        return;
+      try {
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        if (maxScroll > 0) {
+          position = (position + speed) % maxScroll;
+          container.scrollLeft = position;
+        }
+        frameId = requestAnimationFrame(animate);
+      } catch (err) {
+        // Stop animation on error
+        isRunning = false;
       }
-
-      let scrollPosition = container.scrollLeft || 0;
-      const speed = 0.5; // pixels per frame
-
-      const animate = () => {
-        if (isHoveredRef.current || !container) {
-          animationFrameId = requestAnimationFrame(animate);
-          return;
-        }
-
-        scrollPosition += speed;
-        
-        if (scrollPosition >= maxScroll) {
-          scrollPosition = 0;
-        }
-
-        container.scrollLeft = scrollPosition;
-        animationFrameId = requestAnimationFrame(animate);
-      };
-
-      animationFrameId = requestAnimationFrame(animate);
     };
 
-    // Wait for DOM to be ready
-    timeoutId = setTimeout(() => {
-      startAutoScroll();
+    const timeout = setTimeout(() => {
+      if (container && isRunning) {
+        frameId = requestAnimationFrame(animate);
+      }
     }, 200);
 
     return () => {
-      clearTimeout(timeoutId);
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
+      isRunning = false;
+      clearTimeout(timeout);
+      if (frameId !== undefined) {
+        cancelAnimationFrame(frameId);
       }
     };
   }, [repos.length]);
 
   if (!isConfigured) {
     return (
-      <section id="projects" className="min-h-screen">
-        <div className="container-custom">
-          <h2 className="section-title text-center text-white">Projects</h2>
-          <div className="glass rounded-2xl p-8 md:p-12 text-center">
+      <section id="projects" className="min-h-screen py-12">
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
+          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2 font-display">
+            <span className="material-symbols-outlined text-primary">rocket_launch</span>
+            // DEPLOYMENTS_LOG
+          </h3>
+          <div className="glass rounded-2xl p-8 text-center">
             <p className="text-gray-400">Configure your GitHub username to see your projects.</p>
           </div>
         </div>
@@ -77,15 +94,16 @@ export const Projects = () => {
 
   if (loading) {
     return (
-      <section id="projects" className="min-h-screen">
-        <div className="container-custom">
-          <h2 className="section-title text-center text-white">Projects</h2>
-          <div className="overflow-x-auto pb-6 -mx-4 px-4 md:px-6 scrollbar-hide snap-x snap-mandatory">
-            <div className="flex gap-4 md:gap-6 min-w-max">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="w-[320px] md:w-[360px] h-96 bg-white/10 rounded-2xl animate-pulse flex-shrink-0 snap-start"></div>
-              ))}
-            </div>
+      <section id="projects" className="min-h-screen py-12">
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
+          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2 font-display">
+            <span className="material-symbols-outlined text-primary">rocket_launch</span>
+            // DEPLOYMENTS_LOG
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-96 bg-white/10 rounded-xl animate-pulse"></div>
+            ))}
           </div>
         </div>
       </section>
@@ -94,9 +112,12 @@ export const Projects = () => {
 
   if (error) {
     return (
-      <section id="projects" className="min-h-screen">
-        <div className="container-custom">
-          <h2 className="section-title text-center text-white">Projects</h2>
+      <section id="projects" className="min-h-screen py-12">
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
+          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2 font-display">
+            <span className="material-symbols-outlined text-primary">rocket_launch</span>
+            // DEPLOYMENTS_LOG
+          </h3>
           <div className="glass rounded-2xl p-8 text-center">
             <p className="text-red-400 mb-4">Error: {error.message}</p>
           </div>
@@ -107,10 +128,13 @@ export const Projects = () => {
 
   if (repos.length === 0) {
     return (
-      <section id="projects" className="min-h-screen">
-        <div className="container-custom">
-          <h2 className="section-title text-center text-white">Projects</h2>
-          <div className="glass rounded-2xl p-8 md:p-12 text-center">
+      <section id="projects" className="min-h-screen py-12">
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
+          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2 font-display">
+            <span className="material-symbols-outlined text-primary">rocket_launch</span>
+            // DEPLOYMENTS_LOG
+          </h3>
+          <div className="glass rounded-2xl p-8 text-center">
             <p className="text-gray-300">No projects found after filtering.</p>
           </div>
         </div>
@@ -118,27 +142,28 @@ export const Projects = () => {
     );
   }
 
-  const getSortedTopics = (topics: string[]) => {
-    const priority: Record<string, number> = { 'case-study': 1, 'featured': 2, 'ongoing': 3 };
-    return [...topics].sort((a, b) => {
-      return (priority[a.toLowerCase()] || 999) - (priority[b.toLowerCase()] || 999);
-    });
-  };
-
-  const displayedRepos = isExpanded ? repos : repos.slice(0, 3);
-  const hasMoreProjects = repos.length > 3;
+  const displayedRepos = isExpanded ? repos : repos.slice(0, DISPLAY_LIMITS.INITIAL_PROJECTS);
+  const hasMoreProjects = repos.length > DISPLAY_LIMITS.INITIAL_PROJECTS;
 
   return (
-    <section
-      id="projects"
-      className="min-h-screen flex items-center relative z-10"
-    >
-      <div className="container-custom w-full">
-        <div className="text-center mb-8 md:mb-12">
-          <h2 className="section-title text-white">Projects</h2>
-          <p className="text-sm md:text-lg text-gray-400 mb-8 md:mb-16">
-            Showcasing my latest projects and creative solutions
-          </p>
+    <section id="projects" className="relative min-h-screen flex items-center overflow-hidden z-10 py-12">
+      <div className="max-w-7xl mx-auto p-4 md:p-8 w-full">
+        <div className={`flex items-center justify-between mb-6 ${sectionVisible ? 'animate-fadeInUp' : ''}`}>
+          <h3 className="text-xl font-bold text-white flex items-center gap-2 font-display">
+            <span className="material-symbols-outlined text-primary">rocket_launch</span>
+            // DEPLOYMENTS_LOG
+          </h3>
+          <div className="hidden md:flex gap-2">
+            <button className="px-3 py-1 text-xs font-mono rounded bg-surface-dark text-slate-400 border border-border-dark hover:text-white hover:border-primary transition-colors">
+              All
+            </button>
+            <button className="px-3 py-1 text-xs font-mono rounded bg-surface-dark text-slate-400 border border-border-dark hover:text-white hover:border-primary transition-colors">
+              Live
+            </button>
+            <button className="px-3 py-1 text-xs font-mono rounded bg-surface-dark text-slate-400 border border-border-dark hover:text-white hover:border-primary transition-colors">
+              Beta
+            </button>
+          </div>
         </div>
 
         <div
@@ -148,151 +173,135 @@ export const Projects = () => {
           onMouseLeave={() => { isHoveredRef.current = false; }}
           style={{ paddingTop: '8px', paddingBottom: '8px' }}
         >
-          <div className="flex gap-4 md:gap-6 min-w-max py-2">
-            {displayedRepos.map((repo) => {
+          <div ref={sectionRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-w-max md:min-w-0">
+            {displayedRepos.map((repo, index) => {
               const description = repo.readmeDescription || repo.description;
               const deploymentUrl = getDeploymentUrl(repo);
-              const sortedTopics = repo.topics ? getSortedTopics(repo.topics) : [];
+              const status = getStatus(repo.topics);
+              const version = getVersion();
+              const hash = getHash(repo.id);
 
               return (
                 <div
                   key={repo.id}
-                  className="glass rounded-xl overflow-hidden hover:glass-strong flex flex-col group relative transition-all duration-150 hover:-translate-y-2 hover:scale-[1.02] w-[280px] md:w-[360px] flex-shrink-0 snap-start"
-                  style={{ transformOrigin: 'center center' }}
+                  className={`group relative rounded-xl border border-border-dark bg-surface-dark overflow-hidden hover:border-primary/50 transition-colors duration-300 w-[320px] md:w-full flex-shrink-0 md:flex-shrink snap-start ${sectionVisible ? 'animate-fadeInUp' : ''}`}
+                  style={sectionVisible ? { animationDelay: `${index * 0.1}s` } : undefined}
                 >
-                {/* Hover gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-purple-800/0 group-hover:from-purple-600/20 group-hover:to-purple-800/20 transition-all duration-150 pointer-events-none z-10 rounded-xl"></div>
-                {repo.readmeImage && (
-                  <div className="w-full h-32 md:h-40 overflow-hidden bg-white/5 relative">
-                    <img
-                      src={repo.readmeImage}
-                      alt={repo.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent group-hover:from-slate-950/80 transition-all duration-200"></div>
+                  {/* Status Bar */}
+                  <div className="flex items-center justify-between px-4 py-2 bg-background-dark/50 border-b border-border-dark text-xs font-mono">
+                    <span className="flex items-center gap-1.5" style={{ color: status.color }}>
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${status.pulse ? 'animate-pulse' : ''}`}
+                        style={{ backgroundColor: status.color }}
+                      ></span>
+                      {status.label}
+                    </span>
+                    <span className="text-slate-500">v.{version}</span>
                   </div>
-                )}
 
-                <div className="p-3 md:p-4 flex flex-col flex-1 relative z-20">
-                  <div className="flex items-start justify-between mb-2 gap-2">
-                    <h3 className="text-base md:text-lg font-bold text-white flex-1 line-clamp-1">{repo.name}</h3>
-                    {sortedTopics.length > 0 && (
-                      <div className="flex flex-wrap gap-1 justify-end">
-                        {sortedTopics.slice(0, 2).map((topic) => (
-                          <span
-                            key={topic}
-                            className="text-[10px] md:text-xs bg-purple-600/30 text-purple-200 px-1.5 md:px-2 py-0.5 rounded whitespace-nowrap"
-                          >
-                            {topic}
-                          </span>
-                        ))}
+                  {/* Image */}
+                  {repo.readmeImage && (
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        alt={repo.name}
+                        src={repo.readmeImage}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target) {
+                            target.style.display = 'none';
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-surface-dark via-transparent to-transparent opacity-80"></div>
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  <div className="p-4 relative">
+                    <h4 className="text-lg font-bold text-white mb-1 group-hover:text-primary transition-colors font-display">
+                      {repo.name}
+                    </h4>
+                    <p className="text-sm text-slate-400 mb-4 line-clamp-2">
+                      {description || 'No description available'}
+                    </p>
+
+                    {/* Tech Stack Tags */}
+                    {repo.readmeTechStack && repo.readmeTechStack.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {repo.readmeTechStack.slice(0, 3).map((tech) => {
+                          const techColors: Record<string, { bg: string; text: string; border: string }> = {
+                            'React': { bg: 'rgba(59, 130, 246, 0.1)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.2)' },
+                            'TypeScript': { bg: 'rgba(168, 85, 247, 0.1)', text: '#a855f7', border: 'rgba(168, 85, 247, 0.2)' },
+                            'JavaScript': { bg: 'rgba(234, 179, 8, 0.1)', text: '#fbbf24', border: 'rgba(234, 179, 8, 0.2)' },
+                            'Node.js': { bg: 'rgba(16, 185, 129, 0.1)', text: '#34d399', border: 'rgba(16, 185, 129, 0.2)' },
+                            'Tailwind': { bg: 'rgba(6, 182, 212, 0.1)', text: '#22d3ee', border: 'rgba(6, 182, 212, 0.2)' },
+                          };
+                          const color = techColors[tech] || { bg: 'rgba(100, 116, 139, 0.1)', text: '#94a3b8', border: 'rgba(100, 116, 139, 0.2)' };
+                          return (
+                            <span
+                              key={tech}
+                              className="px-2 py-0.5 rounded text-[10px] font-mono border"
+                              style={{
+                                backgroundColor: color.bg,
+                                color: color.text,
+                                borderColor: color.border,
+                              }}
+                            >
+                              {tech}
+                            </span>
+                          );
+                        })}
                       </div>
                     )}
-                  </div>
 
-                  {description ? (
-                    <p className="text-gray-300 text-[11px] md:text-xs mb-2 md:mb-3 line-clamp-2 flex-1 leading-relaxed">
-                      {description}
-                    </p>
-                  ) : (
-                    <p className="text-gray-500 text-[11px] md:text-xs mb-2 md:mb-3 italic flex-1">
-                      No description available
-                    </p>
-                  )}
-
-                  {repo.readmeTechStack && repo.readmeTechStack.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 md:gap-2 mb-2 md:mb-3">
-                      {repo.readmeTechStack.map((tech) => {
-                        const techIcon = getTechIcon(tech);
-                        return (
-                          <div
-                            key={tech}
-                            className="flex items-center gap-1 glass-strong px-1.5 md:px-2.5 py-1 md:py-1.5 rounded-lg border border-white/20 hover:border-purple-500/50 transition-all group"
-                            title={tech}
+                    {/* Footer with Hash and Actions */}
+                    <div className="flex items-center justify-between pt-2 border-t border-border-dark">
+                      <span className="text-xs font-mono text-slate-500">Hash: {hash}</span>
+                      <div className="flex gap-2">
+                        <a
+                          href={repo.html_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-slate-400 hover:text-white transition-colors"
+                          title="View Code"
+                        >
+                          <span className="material-symbols-outlined text-lg">code</span>
+                        </a>
+                        {deploymentUrl && (
+                          <a
+                            href={deploymentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-slate-400 hover:text-primary transition-colors"
+                            title="Launch"
                           >
-                            <img
-                              src={techIcon.url}
-                              alt={tech}
-                              className="w-3 h-3 md:w-4 md:h-4"
-                              style={{ filter: 'brightness(0) invert(1)' }}
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = `<span class="text-[10px] md:text-xs font-bold" style="color: ${techIcon.color}">${tech.charAt(0)}</span><span class="text-white text-[10px] md:text-xs ml-1">${tech}</span>`;
-                                }
-                              }}
-                            />
-                            <span className="text-white text-[10px] md:text-xs font-medium">{tech}</span>
-                          </div>
-                        );
-                      })}
+                            <span className="material-symbols-outlined text-lg">open_in_new</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  )}
-
-                  {(repo.stargazers_count > 0 || repo.forks_count > 0) && (
-                    <div className="flex items-center gap-2 md:gap-3 mt-auto pt-2 md:pt-3 border-t border-white/10 mb-2 md:mb-3 text-[10px] md:text-xs text-gray-400">
-                      {repo.stargazers_count > 0 && (
-                        <span className="flex items-center gap-0.5 md:gap-1">
-                          <i className="bi bi-star-fill text-yellow-400 text-[10px] md:text-xs"></i>
-                          {repo.stargazers_count}
-                        </span>
-                      )}
-                      {repo.forks_count > 0 && (
-                        <span className="flex items-center gap-0.5 md:gap-1">
-                          <i className="bi bi-git-branch-fill text-[10px] md:text-xs"></i>
-                          {repo.forks_count}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex gap-1.5 md:gap-2">
-                    <a
-                      href={repo.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 text-center py-1.5 md:py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg text-[10px] md:text-xs font-semibold transition-all duration-150 shadow-lg shadow-purple-500/20 hover:scale-105 active:scale-95"
-                    >
-                      Code
-                    </a>
-                    {deploymentUrl && (
-                      <a
-                        href={deploymentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 text-center py-1.5 md:py-2 glass hover:glass-strong rounded-lg text-[10px] md:text-xs font-semibold transition-all duration-150 border border-white/20 hover:border-purple-500/50 hover:scale-105 active:scale-95"
-                      >
-                        Live
-                      </a>
-                    )}
                   </div>
-                </div>
                 </div>
               );
             })}
-            
+
             {/* Expand Button */}
             {!isExpanded && hasMoreProjects && (
               <button
                 onClick={() => setIsExpanded(true)}
-                className="glass rounded-xl overflow-hidden hover:glass-strong flex flex-col group relative transition-all duration-150 hover:-translate-y-2 hover:scale-[1.02] w-[280px] md:w-[360px] flex-shrink-0 snap-start cursor-pointer border-2 border-dashed border-white/20 hover:border-purple-500/50"
-                style={{ transformOrigin: 'center center' }}
+                className="group relative rounded-xl border-2 border-dashed border-border-dark bg-surface-dark overflow-hidden hover:border-primary/50 transition-colors duration-300 w-[320px] md:w-full flex-shrink-0 md:flex-shrink snap-start cursor-pointer"
               >
-                <div className="p-3 md:p-4 flex flex-col items-center justify-center h-full min-h-[400px] md:min-h-[450px] space-y-4">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-purple-600/20 to-purple-700/20 flex items-center justify-center group-hover:from-purple-600/30 group-hover:to-purple-700/30 transition-all">
-                    <i className="bi bi-arrow-right-circle-fill text-3xl md:text-4xl text-purple-400 group-hover:text-purple-300 transition-colors"></i>
+                <div className="p-4 flex flex-col items-center justify-center h-full min-h-[400px] space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center group-hover:from-primary/30 group-hover:to-secondary/30 transition-all">
+                    <span className="material-symbols-outlined text-4xl text-primary">expand_more</span>
                   </div>
                   <div className="text-center">
-                    <h3 className="text-base md:text-lg font-bold text-white mb-2">
+                    <h3 className="text-lg font-bold text-white mb-2 font-display">
                       View More Projects
                     </h3>
-                    <p className="text-[11px] md:text-xs text-gray-400">
-                      {repos.length - 3} more project{repos.length - 3 > 1 ? 's' : ''} available
+                    <p className="text-xs text-slate-400 font-mono">
+                      {repos.length - DISPLAY_LIMITS.INITIAL_PROJECTS} more project{repos.length - DISPLAY_LIMITS.INITIAL_PROJECTS > 1 ? 's' : ''} available
                     </p>
                   </div>
                 </div>

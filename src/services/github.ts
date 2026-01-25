@@ -1,67 +1,143 @@
 import type { GitHubUser, GitHubRepo, RepoLanguages } from '../types/github';
+import { sanitizeUrl } from '../utils/security';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_USERNAME = import.meta.env.VITE_GITHUB_USERNAME || '';
 
+/**
+ * Get headers for GitHub API requests
+ * @returns Headers object with Accept header and optional Authorization
+ */
 const getHeaders = (): Record<string, string> => {
   const token = import.meta.env.VITE_GITHUB_TOKEN;
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
   };
-  if (token) headers.Authorization = `token ${token}`;
+  if (token) {
+    headers.Authorization = `token ${token}`;
+  }
   return headers;
 };
 
+/**
+ * Fetch data from GitHub API with error handling
+ * @param url - The API endpoint URL
+ * @returns Promise resolving to the JSON response
+ * @throws Error if the request fails
+ */
 const fetchAPI = async (url: string): Promise<any> => {
-  const response = await fetch(url, { headers: getHeaders() });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || `HTTP ${response.status}`);
+  // Sanitize URL to prevent SSRF attacks
+  const sanitizedUrl = sanitizeUrl(url);
+  if (!sanitizedUrl || !sanitizedUrl.startsWith(GITHUB_API)) {
+    throw new Error('Invalid API URL');
   }
-  return response.json();
+
+  try {
+    const response = await fetch(sanitizedUrl, { headers: getHeaders() });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to fetch data from GitHub API');
+  }
 };
 
+/**
+ * Fetch GitHub user profile
+ * @returns Promise resolving to GitHubUser
+ * @throws Error if username is not configured or API call fails
+ */
 export const fetchUserProfile = async (): Promise<GitHubUser> => {
-  if (!GITHUB_USERNAME) throw new Error('GitHub username is not configured');
-  return fetchAPI(`${GITHUB_API}/users/${GITHUB_USERNAME}`);
+  if (!GITHUB_USERNAME) {
+    throw new Error('GitHub username is not configured');
+  }
+  // Sanitize username to prevent path traversal
+  const sanitizedUsername = encodeURIComponent(GITHUB_USERNAME);
+  return fetchAPI(`${GITHUB_API}/users/${sanitizedUsername}`);
 };
 
+/**
+ * Fetch user repositories
+ * @returns Promise resolving to array of GitHubRepo
+ * @throws Error if username is not configured or API call fails
+ */
 export const fetchRepositories = async (): Promise<GitHubRepo[]> => {
-  if (!GITHUB_USERNAME) throw new Error('GitHub username is not configured');
+  if (!GITHUB_USERNAME) {
+    throw new Error('GitHub username is not configured');
+  }
+  const sanitizedUsername = encodeURIComponent(GITHUB_USERNAME);
   return fetchAPI(
-    `${GITHUB_API}/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=100&type=all`
+    `${GITHUB_API}/users/${sanitizedUsername}/repos?sort=updated&per_page=100&type=all`
   );
 };
 
+/**
+ * Fetch repository languages
+ * @param repoName - Repository name (will be sanitized)
+ * @returns Promise resolving to RepoLanguages object
+ */
 export const fetchRepoLanguages = async (
   repoName: string
 ): Promise<RepoLanguages> => {
   if (!GITHUB_USERNAME) return {};
   try {
-    const response = await fetch(
-      `${GITHUB_API}/repos/${GITHUB_USERNAME}/${repoName}/languages`,
-      { headers: getHeaders() }
-    );
+    // Sanitize repo name to prevent path traversal
+    const sanitizedRepoName = encodeURIComponent(repoName);
+    const sanitizedUsername = encodeURIComponent(GITHUB_USERNAME);
+    const url = `${GITHUB_API}/repos/${sanitizedUsername}/${sanitizedRepoName}/languages`;
+    
+    const sanitizedUrl = sanitizeUrl(url);
+    if (!sanitizedUrl || !sanitizedUrl.startsWith(GITHUB_API)) {
+      return {};
+    }
+
+    const response = await fetch(sanitizedUrl, { headers: getHeaders() });
     return response.ok ? await response.json() : {};
   } catch {
     return {};
   }
 };
 
+/**
+ * Fetch repository README content
+ * @param repoName - Repository name (will be sanitized)
+ * @returns Promise resolving to README content as string
+ */
 export const fetchRepoReadme = async (repoName: string): Promise<string> => {
   if (!GITHUB_USERNAME) return '';
   try {
-    const response = await fetch(
-      `${GITHUB_API}/repos/${GITHUB_USERNAME}/${repoName}/readme`,
-      { headers: { ...getHeaders(), Accept: 'application/vnd.github.v3.raw' } }
-    );
-    if (response.ok) return await response.text();
+    // Sanitize repo name to prevent path traversal
+    const sanitizedRepoName = encodeURIComponent(repoName);
+    const sanitizedUsername = encodeURIComponent(GITHUB_USERNAME);
+    const url = `${GITHUB_API}/repos/${sanitizedUsername}/${sanitizedRepoName}/readme`;
+    
+    const sanitizedUrl = sanitizeUrl(url);
+    if (!sanitizedUrl || !sanitizedUrl.startsWith(GITHUB_API)) {
+      return '';
+    }
+
+    const response = await fetch(sanitizedUrl, {
+      headers: { ...getHeaders(), Accept: 'application/vnd.github.v3.raw' },
+    });
+    if (response.ok) {
+      const text = await response.text();
+      // Basic sanitization of README content to prevent XSS
+      return text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    }
 
     // Fallback: try JSON format
-    const json = await fetchAPI(
-      `${GITHUB_API}/repos/${GITHUB_USERNAME}/${repoName}/readme`
-    );
-    return json.content ? atob(json.content.replace(/\n/g, '')) : '';
+    const json = await fetchAPI(url);
+    if (json.content) {
+      const decoded = atob(json.content.replace(/\n/g, ''));
+      // Basic sanitization
+      return decoded.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    }
+    return '';
   } catch {
     return '';
   }
