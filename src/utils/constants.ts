@@ -85,3 +85,6 @@ export const DISPLAY_LIMITS = {
   FEATURED_PROJECTS: 3,
 } as const;
 
+// Repo names to always include and show first (e.g. from same or other GitHub user)
+export const FEATURED_REPO_NAMES = ['ProjectFlow'] as const;
+

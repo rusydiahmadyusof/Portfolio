@@ -3,7 +3,6 @@ import { useGitHub } from '../hooks/useGitHub';
 import { scrollToSection } from '../utils/scroll';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import { useTypingAnimation } from '../hooks/useTypingAnimation';
-import { useEmailContact } from '../hooks/useEmailContact';
 import { STATUS_TEXT, CONTENT_VARIANTS, CODE_SNIPPETS, ANIMATION_DELAYS } from '../utils/constants';
 import { triggerGlitch, createFloatingElements } from '../utils/animations';
 
@@ -12,7 +11,7 @@ export const Hero = () => {
   const [glitchActive, setGlitchActive] = useState(false);
   const [currentHeading, setCurrentHeading] = useState(CONTENT_VARIANTS[0].heading);
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
-  const { emailCopied, errorMessage, isProcessing, handleContact } = useEmailContact();
+  const githubUrl = user?.html_url || (import.meta.env.VITE_GITHUB_USERNAME ? `https://github.com/${import.meta.env.VITE_GITHUB_USERNAME}` : '#');
   const { ref: textRef, isVisible: textVisible } = useScrollAnimation();
   const { ref: imageRef, isVisible: imageVisible } = useScrollAnimation();
   const particlesRef = useRef<HTMLDivElement>(null);
@@ -170,32 +169,14 @@ export const Hero = () => {
                   <span className="mr-2">INITIATE_PROJECTS</span>
                   <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                 </button>
-                <div className="relative">
-                  <button
-                    onClick={handleContact}
-                    disabled={isProcessing}
-                    className="relative inline-flex h-12 items-center justify-center rounded-lg border border-slate-600 bg-transparent px-8 font-medium text-white transition-all hover:bg-slate-800 hover:border-slate-500 focus:outline-none font-display disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <span className="material-symbols-outlined mr-2 animate-spin">sync</span>
-                        Processing...
-                      </>
-                    ) : emailCopied ? (
-                      <>
-                        <span className="material-symbols-outlined mr-2 text-primary">check</span>
-                        Email Copied!
-                      </>
-                    ) : (
-                      'CONTACT_ME'
-                    )}
-                  </button>
-                  {errorMessage && (
-                    <div className="absolute top-full left-0 mt-2 px-3 py-2 bg-red-500/90 text-white text-xs rounded-lg whitespace-nowrap z-50 animate-fadeIn">
-                      {errorMessage}
-                    </div>
-                  )}
-                </div>
+                <a
+                  href={githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative inline-flex h-12 items-center justify-center rounded-lg border border-slate-600 bg-transparent px-8 font-medium text-white transition-all hover:bg-slate-800 hover:border-slate-500 focus:outline-none font-display"
+                >
+                  CONTACT_ME
+                </a>
               </div>
             </div>
 

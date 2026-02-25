@@ -77,6 +77,46 @@ export const fetchRepositories = async (): Promise<GitHubRepo[]> => {
 };
 
 /**
+ * Fetch a single repository by owner and name.
+ * Use to include repos not in the main list (e.g. ProjectFlow from same or other user).
+ */
+export const fetchSingleRepo = async (
+  owner: string,
+  repoName: string
+): Promise<GitHubRepo | null> => {
+  if (!owner || !repoName) return null;
+  try {
+    const sanitizedOwner = encodeURIComponent(owner);
+    const sanitizedRepo = encodeURIComponent(repoName);
+    const url = `${GITHUB_API}/repos/${sanitizedOwner}/${sanitizedRepo}`;
+    const sanitizedUrl = sanitizeUrl(url);
+    if (!sanitizedUrl || !sanitizedUrl.startsWith(GITHUB_API)) return null;
+    const data = await fetchAPI(sanitizedUrl);
+    if (data.private) return null;
+    return {
+      id: data.id,
+      name: data.name,
+      full_name: data.full_name,
+      description: data.description ?? null,
+      html_url: data.html_url,
+      homepage: data.homepage ?? null,
+      language: data.language ?? null,
+      languages_url: data.languages_url,
+      stargazers_count: data.stargazers_count ?? 0,
+      forks_count: data.forks_count ?? 0,
+      topics: Array.isArray(data.topics) ? data.topics : [],
+      updated_at: data.updated_at ?? data.created_at ?? '',
+      created_at: data.created_at ?? '',
+      fork: Boolean(data.fork),
+      archived: Boolean(data.archived),
+      private: Boolean(data.private),
+    };
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Fetch repository languages
  * @param repoName - Repository name (will be sanitized)
  * @returns Promise resolving to RepoLanguages object

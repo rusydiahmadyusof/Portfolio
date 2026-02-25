@@ -1,6 +1,7 @@
 import useSWR from 'swr';
-import { fetchUserProfile, fetchRepositories, fetchAllRepoLanguages, fetchRepoDescription } from '../services/github';
-import { filterRepositories, calculateTechStack } from '../utils/githubHelpers';
+import { fetchUserProfile, fetchRepositories, fetchSingleRepo, fetchAllRepoLanguages, fetchRepoDescription } from '../services/github';
+import { filterRepositories, calculateTechStack, sortReposWithFeatured } from '../utils/githubHelpers';
+import { FEATURED_REPO_NAMES } from '../utils/constants';
 import type { GitHubUser, GitHubRepo, TechStackItem, RepoLanguages } from '../types/github';
 
 const GITHUB_USERNAME = import.meta.env.VITE_GITHUB_USERNAME || '';
@@ -31,24 +32,38 @@ export const useGitHub = (): UseGitHubReturn => {
   );
 
   const filteredRepos = repos ? filterRepositories(repos) : [];
+  const missingFeatured = FEATURED_REPO_NAMES.filter((name) => !filteredRepos.some((r) => r.name === name));
+  const { data: additionalRepos } = useSWR(
+    isConfigured && missingFeatured.length > 0 ? ['github-featured-repos', missingFeatured.join(',')] : null,
+    async () => {
+      const results = await Promise.all(
+        missingFeatured.map((name) => fetchSingleRepo(GITHUB_USERNAME, name))
+      );
+      return results.filter((r): r is GitHubRepo => r != null);
+    },
+    { revalidateOnFocus: false, revalidateOnReconnect: true, dedupingInterval: 3600000 }
+  );
+  const reposForPipeline = additionalRepos?.length
+    ? sortReposWithFeatured([...filteredRepos, ...additionalRepos])
+    : filteredRepos;
 
   const { data: languagesMap, error: languagesError, isLoading: languagesLoading } = useSWR(
-    isConfigured ? ['github-languages', filteredRepos.map(r => r.name)] : null,
-    () => fetchAllRepoLanguages(filteredRepos || []),
+    isConfigured ? ['github-languages', reposForPipeline.map(r => r.name)] : null,
+    () => fetchAllRepoLanguages(reposForPipeline || []),
     { revalidateOnFocus: false, revalidateOnReconnect: true, dedupingInterval: 86400000 }
   );
 
   // Fetch README descriptions, images, and tech stack for repos
   const { data: repoData } = useSWR(
-    filteredRepos.length > 0 ? ['repo-data', filteredRepos.map(r => r.name)] : null,
+    reposForPipeline.length > 0 ? ['repo-data', reposForPipeline.map(r => r.name)] : null,
     async () => {
       const descriptions = new Map<string, string | null>();
       const images = new Map<string, string | null>();
       const techStacks = new Map<string, string[]>();
       const batchSize = 3; // Smaller batch for README fetching
       
-      for (let i = 0; i < filteredRepos.length; i += batchSize) {
-        const batch = filteredRepos.slice(i, i + batchSize);
+      for (let i = 0; i < reposForPipeline.length; i += batchSize) {
+        const batch = reposForPipeline.slice(i, i + batchSize);
         const results = await Promise.all(
           batch.map(repo => fetchRepoDescription(repo.name).then(data => ({ name: repo.name, ...data })))
         );
@@ -57,7 +72,7 @@ export const useGitHub = (): UseGitHubReturn => {
           images.set(name, image);
           techStacks.set(name, techStack);
         });
-        if (i + batchSize < filteredRepos.length) await new Promise(resolve => setTimeout(resolve, 200));
+        if (i + batchSize < reposForPipeline.length) await new Promise(resolve => setTimeout(resolve, 200));
       }
       
       return { descriptions, images, techStacks };
@@ -66,7 +81,7 @@ export const useGitHub = (): UseGitHubReturn => {
   );
 
   // Merge README data into repos
-  const reposWithDescriptions = filteredRepos.map(repo => {
+  const reposWithDescriptions = reposForPipeline.map(repo => {
     const readmeTechStack = repoData?.techStacks.get(repo.name) || [];
     
     // Fallback: If no tech stack from README, use languages from languagesMap
@@ -93,10 +108,10 @@ export const useGitHub = (): UseGitHubReturn => {
   let techStack: TechStackItem[] = [];
   if (repos && languagesMap && languagesMap.size > 0) {
     techStack = calculateTechStack(reposWithDescriptions, languagesMap);
-  } else if (repos && filteredRepos.length > 0 && !languagesLoading) {
+  } else if (repos && reposForPipeline.length > 0 && !languagesLoading) {
     // Fallback: use primary language from repos
     const primaryLangs: { [key: string]: number } = {};
-    filteredRepos.forEach(repo => {
+    reposForPipeline.forEach(repo => {
       if (repo.language) primaryLangs[repo.language] = (primaryLangs[repo.language] || 0) + 1;
     });
     const total = Object.values(primaryLangs).reduce((sum, count) => sum + count, 0);

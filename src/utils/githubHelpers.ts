@@ -1,4 +1,5 @@
 import type { GitHubRepo, RepoLanguages, TechStackItem } from '../types/github';
+import { FEATURED_REPO_NAMES } from './constants';
 
 const getAllowedTopics = (): string[] | null => {
   const topics = import.meta.env.VITE_REPO_TOPICS;
@@ -11,6 +12,9 @@ const hasAllowedTopic = (repo: GitHubRepo, topics: string[]): boolean => {
   return topics.some(t => repoTopics.includes(t));
 };
 
+const isFeaturedByName = (repo: GitHubRepo): boolean =>
+  FEATURED_REPO_NAMES.some((name) => repo.name === name);
+
 const getTopicPriority = (repo: GitHubRepo): number => {
   if (!repo.topics?.length) return 999;
   const topics = repo.topics.map(t => t.toLowerCase());
@@ -20,20 +24,37 @@ const getTopicPriority = (repo: GitHubRepo): number => {
   return 999;
 };
 
+const getSortOrder = (repo: GitHubRepo): number => {
+  const names = FEATURED_REPO_NAMES as readonly string[];
+  const i = names.indexOf(repo.name);
+  return i >= 0 ? i : 999;
+};
+
 export const filterRepositories = (repos: GitHubRepo[]): GitHubRepo[] => {
   const allowedTopics = getAllowedTopics();
-  
-  const filtered = repos.filter(repo => {
-    if (repo.fork || repo.archived || repo.private) return false;
+
+  const filtered = repos.filter((repo) => {
+    if (repo.private) return false;
+    if (isFeaturedByName(repo)) return true;
+    if (repo.fork || repo.archived) return false;
     if (allowedTopics) return hasAllowedTopic(repo, allowedTopics);
     return true;
   });
-  
-  return filtered.sort((a, b) => {
-    const priorityDiff = getTopicPriority(a) - getTopicPriority(b);
-    return priorityDiff !== 0 ? priorityDiff : new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-  });
+
+  return filtered.sort(compareRepos);
 };
+
+const compareRepos = (a: GitHubRepo, b: GitHubRepo): number => {
+  const orderA = getSortOrder(a);
+  const orderB = getSortOrder(b);
+  if (orderA !== orderB) return orderA - orderB;
+  const priorityDiff = getTopicPriority(a) - getTopicPriority(b);
+  return priorityDiff !== 0 ? priorityDiff : new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+};
+
+/** Sort repos with featured names first (e.g. after merging in additional repos). */
+export const sortReposWithFeatured = (repos: GitHubRepo[]): GitHubRepo[] =>
+  [...repos].sort(compareRepos);
 
 export const calculateTechStack = (
   repos: GitHubRepo[],
