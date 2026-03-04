@@ -88,3 +88,8 @@ export const DISPLAY_LIMITS = {
 // Repo names to always include and show first (e.g. from same or other GitHub user)
 export const FEATURED_REPO_NAMES = ['ProjectFlow'] as const;
 
+// One-line project descriptions (overrides repo description when set; add more as you add repos)
+export const PROJECT_DESCRIPTIONS: Record<string, string> = {
+  ProjectFlow: 'Task and project management app with real-time updates.',
+};
+

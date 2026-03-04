@@ -223,7 +223,7 @@ export const Hero = () => {
                   {user?.name || 'Rusydi Ahmad Yusof'}
                 </h2>
                 <p className="text-sm md:text-base text-slate-400 font-mono tracking-wider uppercase">
-                  {user?.bio || 'Front End Web Developer'}
+                  Full Stack Web Developer
                 </p>
               </div>
             </div>

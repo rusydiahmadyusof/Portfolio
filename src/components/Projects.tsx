@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGitHub } from '../hooks/useGitHub';
 import { getDeploymentUrl } from '../utils/githubHelpers';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
-import { PROJECT_STATUS, VERSIONS, DISPLAY_LIMITS } from '../utils/constants';
+import { PROJECT_STATUS, VERSIONS, DISPLAY_LIMITS, PROJECT_DESCRIPTIONS } from '../utils/constants';
 
 const getStatus = (topics: string[] = []): { label: string; color: string; pulse: boolean } => {
   if (topics.includes('live') || topics.includes('deployed')) {
@@ -175,7 +175,8 @@ export const Projects = () => {
         >
           <div ref={sectionRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-w-max md:min-w-0">
             {displayedRepos.map((repo, index) => {
-              const description = repo.readmeDescription || repo.description;
+              const description =
+                PROJECT_DESCRIPTIONS[repo.name] ?? repo.readmeDescription ?? repo.description ?? 'A project I built.';
               const deploymentUrl = getDeploymentUrl(repo);
               const status = getStatus(repo.topics);
               const version = getVersion();

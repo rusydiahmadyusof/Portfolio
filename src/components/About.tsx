@@ -56,9 +56,11 @@ export const About = () => {
   }
 
   const name = user?.name || 'Rusydi Ahmad Yusof';
-  const role = user?.bio || 'Front End Web Developer';
+  const role = 'Full Stack Web Developer';
   const location = user?.location || 'Malaysia';
-  const interests = ['React', 'TypeScript', 'Modern Web Development'];
+  const interests = ['React', 'TypeScript', 'Node.js', 'Full-Stack Development'];
+  const tagline = 'I build full-stack web apps with React, TypeScript, and Node.';
+  const lookingFor = 'Open to full-stack opportunities.';
 
   return (
     <section id="about" className="relative min-h-screen flex items-center overflow-hidden z-10 py-12">
@@ -102,6 +104,12 @@ export const About = () => {
                   ))}
                 </div>
                 <div className="pl-4">],</div>
+                <div className="pl-4">
+                  <span className="code-syntax-key">"tagline"</span>: <span className="code-syntax-string">"{tagline}"</span>,
+                </div>
+                <div className="pl-4">
+                  <span className="code-syntax-key">"lookingFor"</span>: <span className="code-syntax-string">"{lookingFor}"</span>,
+                </div>
                 <div className="pl-4">
                   <span className="code-syntax-key">"mission"</span>: <span className="code-syntax-string">"To create immersive web experiences that blur the line between utility and art."</span>
                 </div>
