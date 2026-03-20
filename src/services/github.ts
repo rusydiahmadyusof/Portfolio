@@ -416,7 +416,35 @@ const parseCategorizedTechStackFromReadme = (content: string): string[] => {
     sectionMatch = content.match(
       /(?:###|##)\s*[🛠️]*\s*(?:Technologies|Stack|Tech|Built\s+With)[\s\S]*?(?=(?:###|##|$))/i
     );
-    if (!sectionMatch) return [];
+  }
+
+  // If we couldn't find any "tech stack" section/heading, detect techs from inline text
+  // (e.g. "built with Next.js, React, ... Supabase") across the full README.
+  if (!sectionMatch) {
+    const keywordTechs: Array<{ patterns: RegExp[]; name: string }> = [
+      { patterns: [/next\.?js/i, /nextjs/i], name: 'Next.js' },
+      { patterns: [/react/i], name: 'React' },
+      { patterns: [/tailwind/i, /tailwindcss/i], name: 'Tailwind CSS' },
+      { patterns: [/supabase/i], name: 'Supabase' },
+      { patterns: [/typescript/i, /ts\b/i], name: 'TypeScript' },
+      { patterns: [/node(\.js)?/i], name: 'Node.js' },
+      { patterns: [/express/i], name: 'Express' },
+      { patterns: [/firebase/i], name: 'Firebase' },
+      { patterns: [/javascript/i, /\bjs\b/i], name: 'JavaScript' },
+    ];
+
+    const found: string[] = [];
+    for (const tech of keywordTechs) {
+      const isFound = tech.patterns.some((p) => p.test(content));
+      if (isFound) found.push(tech.name);
+    }
+
+    // De-dupe case-insensitively
+    const unique = found.filter(
+      (t, idx, arr) => arr.findIndex((x) => x.toLowerCase() === t.toLowerCase()) === idx
+    );
+
+    return unique;
   }
 
   const section = sectionMatch[0];
