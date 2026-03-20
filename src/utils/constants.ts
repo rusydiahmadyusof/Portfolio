@@ -95,5 +95,5 @@ export const PROJECT_DESCRIPTIONS: Record<string, string> = {
 };
 
 // Repo names to never show in the portfolio UI (case-insensitive match in filtering)
-export const EXCLUDED_REPO_NAMES = ['exclusive', 'furniro'] as const;
+export const EXCLUDED_REPO_NAMES = ['exclusive', 'furniro', 'jommasakresepi'] as const;
 
