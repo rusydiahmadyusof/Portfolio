@@ -124,8 +124,31 @@ const getCategorizedTechStacks = (
 
   // If we didn't detect back-end techs, fall back to "anything backend-ish" we have;
   // otherwise show nothing for the second line (cleaner for recruiters).
-  const frontEndTechs = pickByPriority(frontCandidates, frontPriority, maxFrontEnd);
+  let frontEndTechs = pickByPriority(frontCandidates, frontPriority, maxFrontEnd);
   const backEndTechs = pickByPriority(backCandidates, backPriority, maxBackEnd);
+
+  // Avoid redundancy: Next.js implies React, so don't show both together.
+  // If Next.js is present and React got picked, remove React and top up to maxFrontEnd.
+  if (frontEndTechs.some((t) => t.toLowerCase() === 'next.js')) {
+    const hadReact = frontEndTechs.some((t) => t.toLowerCase() === 'react');
+    if (hadReact) {
+      frontEndTechs = frontEndTechs.filter((t) => t.toLowerCase() !== 'react');
+
+      // Top up from the priority list, skipping React
+      if (frontEndTechs.length < maxFrontEnd) {
+        const existing = new Set(frontEndTechs.map((t) => t.toLowerCase()));
+        for (const p of frontPriority) {
+          if (frontEndTechs.length >= maxFrontEnd) break;
+          if (p.toLowerCase() === 'react') continue;
+          if (existing.has(p.toLowerCase())) continue;
+          if (frontCandidates.some((c) => c.toLowerCase() === p.toLowerCase())) {
+            frontEndTechs.push(p);
+            existing.add(p.toLowerCase());
+          }
+        }
+      }
+    }
+  }
 
   return { frontEndTechs, backEndTechs };
 };
