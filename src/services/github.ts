@@ -540,14 +540,17 @@ const parseCategorizedTechStackFromReadme = (content: string): string[] => {
     }
   }
 
-  // Fallback: If we found some tech but missing common ones, search the entire section
-  // This handles cases where tech might be listed differently
-  if (techStack.length > 0 && techStack.length < 3) {
+  // Fallback: If we found some (or zero) tech, search the entire section for common keywords.
+  // This handles cases where tech is listed as a simple comma/bullet list without explicit "Frontend/Backend:" labels.
+  if (techStack.length < 3) {
     const commonTechs = [
       { patterns: [/next\.?js/i, /nextjs/i], name: 'Next.js' },
       { patterns: [/tailwind/i, /tailwindcss/i], name: 'Tailwind CSS' },
       { patterns: [/firebase/i], name: 'Firebase' },
+      { patterns: [/supabase/i], name: 'Supabase' },
       { patterns: [/react/i], name: 'React' },
+      { patterns: [/node(\.js)?/i], name: 'Node.js' },
+      { patterns: [/express/i], name: 'Express' },
       { patterns: [/typescript/i, /ts\b/i], name: 'TypeScript' },
       { patterns: [/javascript/i, /js\b/i], name: 'JavaScript' },
     ];

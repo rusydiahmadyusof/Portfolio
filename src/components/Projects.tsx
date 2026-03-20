@@ -32,6 +32,7 @@ const normalizeTechNameForCard = (tech: string): string => {
   if (lower.includes('next')) return 'Next.js';
   if (lower === 'node' || lower.includes('node.js') || /\bnode\b/i.test(lower) || lower.includes('nodejs')) return 'Node.js';
   if (lower.includes('express')) return 'Express';
+  if (lower.includes('supabase')) return 'Supabase';
   if (lower.includes('typescript') || /\bts\b/i.test(lower)) return 'TypeScript';
   if (lower.includes('javascript') || /\bjs\b/i.test(lower)) return 'JavaScript';
   if (lower.includes('firebase')) return 'Firebase';
@@ -40,8 +41,58 @@ const normalizeTechNameForCard = (tech: string): string => {
   return cleaned;
 };
 
-const getDisplayTechStack = (rawTechStack: string[], maxCount = 3): string[] => {
-  if (!rawTechStack || rawTechStack.length === 0) return [];
+const renderTechPill = (tech: string) => {
+  const color = getTechColor(tech);
+  const rgb = hexToRgb(color.text) || { r: 37, g: 226, b: 244 };
+  const bg = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.10)`;
+  const border = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`;
+
+  return (
+    <span
+      key={tech}
+      className="px-2 py-0.5 rounded text-[10px] font-mono border"
+      style={{
+        backgroundColor: bg,
+        color: color.text,
+        borderColor: border,
+      }}
+    >
+      {tech}
+    </span>
+  );
+};
+
+const isFrontendTech = (tech: string): boolean => {
+  const lower = tech.toLowerCase();
+  return (
+    lower.includes('react') ||
+    lower.includes('next') ||
+    lower.includes('tailwind') ||
+    lower.includes('typescript') ||
+    lower === 'typescript' ||
+    lower.includes('javascript') ||
+    lower === 'javascript'
+  );
+};
+
+const isBackendTech = (tech: string): boolean => {
+  const lower = tech.toLowerCase();
+  return (
+    lower.includes('supabase') ||
+    lower.includes('node') ||
+    lower.includes('express') ||
+    lower.includes('firebase')
+  );
+};
+
+const getCategorizedTechStacks = (
+  rawTechStack: string[],
+  maxFrontEnd = 3,
+  maxBackEnd = 2,
+): { frontEndTechs: string[]; backEndTechs: string[] } => {
+  if (!rawTechStack || rawTechStack.length === 0) {
+    return { frontEndTechs: [], backEndTechs: [] };
+  }
 
   const normalized = rawTechStack.map(normalizeTechNameForCard).filter(Boolean);
 
@@ -54,28 +105,29 @@ const getDisplayTechStack = (rawTechStack: string[], maxCount = 3): string[] => 
     seen.add(key);
     unique.push(tech);
   }
-  if (unique.length === 0) return [];
 
-  // Prioritized shortlist for recruiter readability (Option B)
-  const priority = [
-    'React',
-    'Next.js',
-    'TypeScript',
-    'JavaScript',
-    'Tailwind',
-    'Node.js',
-    'Express',
-    'Firebase',
-  ];
+  const frontCandidates = unique.filter(isFrontendTech);
+  const backCandidates = unique.filter(isBackendTech);
 
-  const out: string[] = [];
-  for (const p of priority) {
-    if (out.length >= maxCount) break;
-    if (unique.some((u) => u.toLowerCase() === p.toLowerCase())) out.push(p);
-  }
+  const frontPriority = ['Next.js', 'React', 'TypeScript', 'Tailwind', 'JavaScript'];
+  const backPriority = ['Supabase', 'Node.js', 'Express', 'Firebase'];
 
-  // If nothing matched the shortlist, show whatever we have (up to maxCount)
-  return out.length > 0 ? out.slice(0, maxCount) : unique.slice(0, maxCount);
+  const pickByPriority = (candidates: string[], priority: string[], max: number) => {
+    const out: string[] = [];
+    for (const p of priority) {
+      if (out.length >= max) break;
+      if (candidates.some((c) => c.toLowerCase() === p.toLowerCase())) out.push(p);
+    }
+    if (out.length > 0) return out.slice(0, max);
+    return candidates.slice(0, max);
+  };
+
+  // If we didn't detect back-end techs, fall back to "anything backend-ish" we have;
+  // otherwise show nothing for the second line (cleaner for recruiters).
+  const frontEndTechs = pickByPriority(frontCandidates, frontPriority, maxFrontEnd);
+  const backEndTechs = pickByPriority(backCandidates, backPriority, maxBackEnd);
+
+  return { frontEndTechs, backEndTechs };
 };
 
 const getStatus = (topics: string[] = []): { label: string; color: string; pulse: boolean } => {
@@ -251,7 +303,7 @@ export const Projects = () => {
             {displayedRepos.map((repo, index) => {
               const description =
                 PROJECT_DESCRIPTIONS[repo.name] ?? repo.readmeDescription ?? repo.description ?? 'A project I built.';
-              const displayedTechs = getDisplayTechStack(repo.readmeTechStack || [], 3);
+              const { frontEndTechs, backEndTechs } = getCategorizedTechStacks(repo.readmeTechStack || [], 3, 2);
               const deploymentUrl = getDeploymentUrl(repo);
               const status =
                 ['ProjectFlow', 'CareerKit'].includes(repo.name)
@@ -306,28 +358,20 @@ export const Projects = () => {
                     </p>
 
                     {/* Tech Stack Tags */}
-                    {displayedTechs.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {displayedTechs.map((tech) => {
-                          const color = getTechColor(tech);
-                          const rgb = hexToRgb(color.text) || { r: 37, g: 226, b: 244 };
-                          const bg = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.10)`;
-                          const border = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`;
-
-                          return (
-                            <span
-                              key={tech}
-                              className="px-2 py-0.5 rounded text-[10px] font-mono border"
-                              style={{
-                                backgroundColor: bg,
-                                color: color.text,
-                                borderColor: border,
-                              }}
-                            >
-                              {tech}
-                            </span>
-                          );
-                        })}
+                    {(frontEndTechs.length > 0 || backEndTechs.length > 0) && (
+                      <div className="space-y-2 mb-4">
+                        {frontEndTechs.length > 0 && (
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <span className="text-[10px] font-mono text-slate-500">FRONT</span>
+                            {frontEndTechs.map(renderTechPill)}
+                          </div>
+                        )}
+                        {backEndTechs.length > 0 && (
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <span className="text-[10px] font-mono text-slate-500">BACK</span>
+                            {backEndTechs.map(renderTechPill)}
+                          </div>
+                        )}
                       </div>
                     )}
 
