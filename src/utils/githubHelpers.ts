@@ -1,5 +1,5 @@
 import type { GitHubRepo, RepoLanguages, TechStackItem } from '../types/github';
-import { FEATURED_REPO_NAMES } from './constants';
+import { EXCLUDED_REPO_NAMES, FEATURED_REPO_NAMES } from './constants';
 
 const getAllowedTopics = (): string[] | null => {
   const topics = import.meta.env.VITE_REPO_TOPICS;
@@ -14,6 +14,9 @@ const hasAllowedTopic = (repo: GitHubRepo, topics: string[]): boolean => {
 
 const isFeaturedByName = (repo: GitHubRepo): boolean =>
   FEATURED_REPO_NAMES.some((name) => repo.name === name);
+
+const isExcludedByName = (repo: GitHubRepo): boolean =>
+  EXCLUDED_REPO_NAMES.some((name) => name.toLowerCase() === repo.name.toLowerCase());
 
 const getTopicPriority = (repo: GitHubRepo): number => {
   if (!repo.topics?.length) return 999;
@@ -34,6 +37,7 @@ export const filterRepositories = (repos: GitHubRepo[]): GitHubRepo[] => {
   const allowedTopics = getAllowedTopics();
 
   const filtered = repos.filter((repo) => {
+    if (isExcludedByName(repo)) return false;
     if (repo.private) return false;
     if (isFeaturedByName(repo)) return true;
     if (repo.fork || repo.archived) return false;

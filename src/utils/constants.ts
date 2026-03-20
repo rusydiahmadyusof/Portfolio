@@ -86,10 +86,14 @@ export const DISPLAY_LIMITS = {
 } as const;
 
 // Repo names to always include and show first (e.g. from same or other GitHub user)
-export const FEATURED_REPO_NAMES = ['ProjectFlow'] as const;
+export const FEATURED_REPO_NAMES = ['ProjectFlow', 'CareerKit'] as const;
 
 // One-line project descriptions (overrides repo description when set; add more as you add repos)
 export const PROJECT_DESCRIPTIONS: Record<string, string> = {
   ProjectFlow: 'Task and project management app with real-time updates.',
+  CareerKit: 'Career-focused portfolio builder with guided templates and project curation.',
 };
+
+// Repo names to never show in the portfolio UI (case-insensitive match in filtering)
+export const EXCLUDED_REPO_NAMES = ['exclusive', 'furniro'] as const;
 
