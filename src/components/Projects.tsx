@@ -3,6 +3,80 @@ import { useGitHub } from '../hooks/useGitHub';
 import { getDeploymentUrl } from '../utils/githubHelpers';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import { PROJECT_STATUS, VERSIONS, DISPLAY_LIMITS, PROJECT_DESCRIPTIONS } from '../utils/constants';
+import { getTechColor } from '../utils/techHelpers';
+
+const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+  const cleaned = hex.replace('#', '').trim();
+  if (cleaned.length === 3) {
+    const r = parseInt(cleaned[0] + cleaned[0], 16);
+    const g = parseInt(cleaned[1] + cleaned[1], 16);
+    const b = parseInt(cleaned[2] + cleaned[2], 16);
+    if ([r, g, b].some((n) => Number.isNaN(n))) return null;
+    return { r, g, b };
+  }
+  if (cleaned.length !== 6) return null;
+  const r = parseInt(cleaned.slice(0, 2), 16);
+  const g = parseInt(cleaned.slice(2, 4), 16);
+  const b = parseInt(cleaned.slice(4, 6), 16);
+  if ([r, g, b].some((n) => Number.isNaN(n))) return null;
+  return { r, g, b };
+};
+
+const normalizeTechNameForCard = (tech: string): string => {
+  const cleaned = tech.trim();
+  const lower = cleaned.toLowerCase();
+
+  // Common normalizations (helps with consistent card labels/colors)
+  if (lower.includes('tailwind')) return 'Tailwind';
+  if (lower.includes('react')) return 'React';
+  if (lower.includes('next')) return 'Next.js';
+  if (lower === 'node' || lower.includes('node.js') || /\bnode\b/i.test(lower) || lower.includes('nodejs')) return 'Node.js';
+  if (lower.includes('express')) return 'Express';
+  if (lower.includes('typescript') || /\bts\b/i.test(lower)) return 'TypeScript';
+  if (lower.includes('javascript') || /\bjs\b/i.test(lower)) return 'JavaScript';
+  if (lower.includes('firebase')) return 'Firebase';
+
+  // Fall back to the original string (better than dropping unknown techs)
+  return cleaned;
+};
+
+const getDisplayTechStack = (rawTechStack: string[], maxCount = 3): string[] => {
+  if (!rawTechStack || rawTechStack.length === 0) return [];
+
+  const normalized = rawTechStack.map(normalizeTechNameForCard).filter(Boolean);
+
+  // De-dupe case-insensitively
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const tech of normalized) {
+    const key = tech.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(tech);
+  }
+  if (unique.length === 0) return [];
+
+  // Prioritized shortlist for recruiter readability (Option B)
+  const priority = [
+    'React',
+    'Next.js',
+    'TypeScript',
+    'JavaScript',
+    'Tailwind',
+    'Node.js',
+    'Express',
+    'Firebase',
+  ];
+
+  const out: string[] = [];
+  for (const p of priority) {
+    if (out.length >= maxCount) break;
+    if (unique.some((u) => u.toLowerCase() === p.toLowerCase())) out.push(p);
+  }
+
+  // If nothing matched the shortlist, show whatever we have (up to maxCount)
+  return out.length > 0 ? out.slice(0, maxCount) : unique.slice(0, maxCount);
+};
 
 const getStatus = (topics: string[] = []): { label: string; color: string; pulse: boolean } => {
   if (topics.includes('live') || topics.includes('deployed')) {
@@ -177,8 +251,12 @@ export const Projects = () => {
             {displayedRepos.map((repo, index) => {
               const description =
                 PROJECT_DESCRIPTIONS[repo.name] ?? repo.readmeDescription ?? repo.description ?? 'A project I built.';
+              const displayedTechs = getDisplayTechStack(repo.readmeTechStack || [], 3);
               const deploymentUrl = getDeploymentUrl(repo);
-              const status = getStatus(repo.topics);
+              const status =
+                ['ProjectFlow', 'CareerKit'].includes(repo.name)
+                  ? PROJECT_STATUS.BETA
+                  : getStatus(repo.topics);
               const version = getVersion();
               const hash = getHash(repo.id);
 
@@ -228,25 +306,22 @@ export const Projects = () => {
                     </p>
 
                     {/* Tech Stack Tags */}
-                    {repo.readmeTechStack && repo.readmeTechStack.length > 0 && (
+                    {displayedTechs.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {repo.readmeTechStack.slice(0, 3).map((tech) => {
-                          const techColors: Record<string, { bg: string; text: string; border: string }> = {
-                            'React': { bg: 'rgba(59, 130, 246, 0.1)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.2)' },
-                            'TypeScript': { bg: 'rgba(168, 85, 247, 0.1)', text: '#a855f7', border: 'rgba(168, 85, 247, 0.2)' },
-                            'JavaScript': { bg: 'rgba(234, 179, 8, 0.1)', text: '#fbbf24', border: 'rgba(234, 179, 8, 0.2)' },
-                            'Node.js': { bg: 'rgba(16, 185, 129, 0.1)', text: '#34d399', border: 'rgba(16, 185, 129, 0.2)' },
-                            'Tailwind': { bg: 'rgba(6, 182, 212, 0.1)', text: '#22d3ee', border: 'rgba(6, 182, 212, 0.2)' },
-                          };
-                          const color = techColors[tech] || { bg: 'rgba(100, 116, 139, 0.1)', text: '#94a3b8', border: 'rgba(100, 116, 139, 0.2)' };
+                        {displayedTechs.map((tech) => {
+                          const color = getTechColor(tech);
+                          const rgb = hexToRgb(color.text) || { r: 37, g: 226, b: 244 };
+                          const bg = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.10)`;
+                          const border = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`;
+
                           return (
                             <span
                               key={tech}
                               className="px-2 py-0.5 rounded text-[10px] font-mono border"
                               style={{
-                                backgroundColor: color.bg,
+                                backgroundColor: bg,
                                 color: color.text,
-                                borderColor: color.border,
+                                borderColor: border,
                               }}
                             >
                               {tech}
