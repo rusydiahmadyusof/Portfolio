@@ -1,7 +1,8 @@
 import { useGitHub } from '../hooks/useGitHub';
 import { TerminalWindow } from './TerminalWindow';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
-import { getTechColor, getTechIconName } from '../utils/techHelpers';
+import { TechBrandIcon } from './TechBrandIcon';
+import { getTechColor } from '../utils/techHelpers';
 import { DISPLAY_LIMITS } from '../utils/constants';
 
 export const About = () => {
@@ -137,7 +138,6 @@ export const About = () => {
                 <div className="grid grid-cols-4 gap-6 relative z-10 h-full content-center">
                   {techStack.slice(0, DISPLAY_LIMITS.TECH_STACK).map((tech, index) => {
                     const color = getTechColor(tech.name);
-                    const iconName = getTechIconName(tech.name);
                     return (
                       <div 
                         key={tech.name} 
@@ -159,7 +159,10 @@ export const About = () => {
                             e.currentTarget.style.borderColor = '#30363d';
                           }}
                         >
-                          <span className="material-symbols-outlined text-3xl">{iconName}</span>
+                          <TechBrandIcon
+                            name={tech.name}
+                            className="h-8 w-8 shrink-0 opacity-90 group-hover/node:opacity-100"
+                          />
                         </div>
                         <span className="text-xs font-mono text-slate-400 group-hover/node:text-white transition-colors">
                           {tech.name}

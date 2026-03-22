@@ -56,19 +56,39 @@ export const TECH_COLORS: Record<string, { text: string; border: string; shadow:
   JavaScript: { text: '#fbbf24', border: '#fbbf24', shadow: 'rgba(251,191,36,0.4)' },
   'Node.js': { text: '#34d399', border: '#34d399', shadow: 'rgba(52,211,153,0.4)' },
   Tailwind: { text: '#a855f7', border: '#a855f7', shadow: 'rgba(168,85,247,0.4)' },
+  'Next.js': { text: '#e5e5e5', border: '#e5e5e5', shadow: 'rgba(229,229,229,0.35)' },
+  Supabase: { text: '#3ecf8e', border: '#3ecf8e', shadow: 'rgba(62,207,142,0.4)' },
+  Vite: { text: '#646cff', border: '#646cff', shadow: 'rgba(100,108,255,0.4)' },
   AWS: { text: '#fb923c', border: '#fb923c', shadow: 'rgba(251,146,60,0.4)' },
   'Three.js': { text: '#f472b6', border: '#f472b6', shadow: 'rgba(244,114,182,0.4)' },
 } as const;
 
 export const TECH_ICONS: Record<string, string> = {
   React: 'code_blocks',
-  TypeScript: 'javascript',
+  TypeScript: 'data_object',
   JavaScript: 'javascript',
   'Node.js': 'dataset',
   Tailwind: 'brush',
+  Supabase: 'database',
+  Vite: 'electric_bolt',
   AWS: 'cloud',
   'Three.js': 'view_in_ar',
 } as const;
+
+/**
+ * // TECH_STACK.NET — fixed order, recruiter-recognizable labels only.
+ * Empty this array to fall back to GitHub-derived detection.
+ */
+export const PROFILE_TECH_STACK: readonly string[] = [
+  'TypeScript',
+  'JavaScript',
+  'React',
+  'Next.js',
+  'Node.js',
+  'Tailwind CSS',
+  'Supabase',
+  'Vite',
+];
 
 // Project constants
 export const PROJECT_STATUS = {
