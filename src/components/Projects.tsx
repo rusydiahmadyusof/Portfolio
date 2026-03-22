@@ -329,9 +329,11 @@ export const Projects = () => {
               const { frontEndTechs, backEndTechs } = getCategorizedTechStacks(repo.readmeTechStack || [], 3, 2);
               const deploymentUrl = getDeploymentUrl(repo);
               const status =
-                ['ProjectFlow', 'CareerKit'].includes(repo.name)
-                  ? PROJECT_STATUS.BETA
-                  : getStatus(repo.topics);
+                repo.name === 'ResponFlow'
+                  ? PROJECT_STATUS.IN_DEVELOPMENT
+                  : ['ProjectFlow', 'CareerKit'].includes(repo.name)
+                    ? PROJECT_STATUS.BETA
+                    : getStatus(repo.topics);
               const version = getVersion();
               const hash = getHash(repo.id);
 

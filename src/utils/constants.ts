@@ -74,6 +74,7 @@ export const TECH_ICONS: Record<string, string> = {
 export const PROJECT_STATUS = {
   LIVE: { label: 'Live', color: '#34d399', pulse: true },
   BETA: { label: 'Beta', color: '#fbbf24', pulse: false },
+  IN_DEVELOPMENT: { label: 'In development', color: '#38bdf8', pulse: false },
 } as const;
 
 export const VERSIONS = ['1.2.0', '0.9.1', '3.0.0', '2.1.4', '1.0.0'] as const;
@@ -86,10 +87,12 @@ export const DISPLAY_LIMITS = {
 } as const;
 
 // Repo names to always include and show first (e.g. from same or other GitHub user)
-export const FEATURED_REPO_NAMES = ['ProjectFlow', 'CareerKit'] as const;
+export const FEATURED_REPO_NAMES = ['ResponFlow', 'ProjectFlow', 'CareerKit'] as const;
 
 // One-line project descriptions (overrides repo description when set; add more as you add repos)
 export const PROJECT_DESCRIPTIONS: Record<string, string> = {
+  ResponFlow:
+    'Web-first mini CRM for Malaysian SMEs managing WhatsApp leads (MVP). Next.js, TypeScript, Tailwind, Supabase.',
   ProjectFlow: 'Task and project management app with real-time updates.',
   CareerKit: 'Career-focused portfolio builder with guided templates and project curation.',
 };
