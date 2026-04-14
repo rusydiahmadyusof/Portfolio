@@ -122,12 +122,15 @@ export const getDeploymentUrl = (repo: { name: string; homepage: string | null }
   const customUrls = import.meta.env.VITE_REPO_URLS;
   if (customUrls) {
     const urlMap: { [key: string]: string } = {};
-    customUrls.split(',').forEach(mapping => {
-      const [name, url] = mapping.split(':');
-      if (name && url) {
-        const sanitized = sanitizeUrl(url.trim());
-        if (sanitized) urlMap[name.trim()] = sanitized;
-      }
+    customUrls.split(',').forEach((mapping) => {
+      // Support values like "RepoName:https://example.com" without breaking on "https://"
+      const separatorIndex = mapping.indexOf(':');
+      if (separatorIndex === -1) return;
+      const name = mapping.slice(0, separatorIndex).trim();
+      const url = mapping.slice(separatorIndex + 1).trim();
+      if (!name || !url) return;
+      const sanitized = sanitizeUrl(url);
+      if (sanitized) urlMap[name] = sanitized;
     });
     if (urlMap[repo.name]) return urlMap[repo.name];
   }
